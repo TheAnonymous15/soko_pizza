@@ -69,7 +69,7 @@ def ussd_order(request):
 
     if state == "select_size":
         try:
-            pizzas = list(Pizza.objects.all())
+            pizzas = list(Pizza.objects.all()) # type: ignore
             pizza = pizzas[int(selection) - 1]
             context.update({"pizza_id": pizza.id, "pizza_name": pizza.name})
             session_data.update({"state": "select_quantity", "context": context})

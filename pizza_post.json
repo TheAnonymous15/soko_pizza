@@ -1,0 +1,226 @@
+{
+  "info": {
+    "name": "Soko Pizza API",
+    "_postman_id": "b1e8374b-4a52-4f63-81e8-2e7df2cb5314",
+    "description": "Postman Collection for Soko Pizza USSD-style Ordering API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Pizza List",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/pizza/",
+          "protocol": "http",
+          "host": [
+            "127.0.0.1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "pizza"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Toppings",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/toppings?size=small&category=basic",
+          "protocol": "http",
+          "host": [
+            "127.0.0.1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "toppings"
+          ],
+          "query": [
+            {
+              "key": "size",
+              "value": "small"
+            },
+            {
+              "key": "category",
+              "value": "basic"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "USSD Step 1 - Start",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"session_id\": \"test-session-1\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/order/",
+          "protocol": "http",
+          "host": [
+            "127.0.0.1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "USSD Step 2 - Select Option",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"session_id\": \"test-session-1\",\n    \"selection\": \"1\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/order/",
+          "protocol": "http",
+          "host": [
+            "127.0.0.1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "USSD Step 3 - Select Size",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"session_id\": \"test-session-1\",\n    \"selection\": \"1\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/order/",
+          "protocol": "http",
+          "host": [
+            "127.0.0.1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "USSD Step 4 - Quantity",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"session_id\": \"test-session-1\",\n    \"selection\": \"2\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/order/",
+          "protocol": "http",
+          "host": [
+            "127.0.0.1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "USSD Step 5 - Toppings",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"session_id\": \"test-session-1\",\n    \"selection\": \"1,2\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/order/",
+          "protocol": "http",
+          "host": [
+            "127.0.0.1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "USSD Step 6 - Confirm",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"session_id\": \"test-session-1\",\n    \"selection\": \"1\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/order/",
+          "protocol": "http",
+          "host": [
+            "127.0.0.1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "order"
+          ]
+        }
+      }
+    }
+  ]
+}
