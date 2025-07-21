@@ -30,7 +30,7 @@ class Order(models.Model):
 
     @property
     def subtotal(self):
-        return sum(item.total_price for item in self.items.all())
+        return sum(item.total_price for item in self.items.all()) # type: ignore
 
     @property
     def vat(self):

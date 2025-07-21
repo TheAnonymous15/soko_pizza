@@ -10,7 +10,7 @@ from .serializers import PizzaSerializer, ToppingSerializer
 
 @api_view(['GET'])
 def pizza_list(request):
-    pizzas = Pizza.objects.all()
+    pizzas = Pizza.objects.all() # type: ignore
     serializer = PizzaSerializer(pizzas, many=True)
     return Response(serializer.data)
 
@@ -19,7 +19,7 @@ def pizza_list(request):
 def topping_list(request):
     size = request.GET.get('size')
     category = request.GET.get('category')
-    toppings = Topping.objects.all()
+    toppings = Topping.objects.all() # type: ignore
     if size:
         toppings = toppings.filter(pizza__name__iexact=size)
     if category:
@@ -37,7 +37,6 @@ def ussd_order(request):
     if not session_id:
         return Response({"error": "Missing session_id"}, status=400)
 
-    # get session state from cache
     session_data = cache.get(session_id, {
         "state": "main_menu",
         "context": {}
@@ -54,7 +53,7 @@ def ussd_order(request):
 
     if state == "main_menu_selection":
         if selection == '1':
-            pizzas = Pizza.objects.all()
+            pizzas = Pizza.objects.all() # type: ignore
             menu_lines = ["Select pizza size:"]
             for idx, p in enumerate(pizzas, start=1):
                 menu_lines.append(f"{idx}. {p.name} - {int(p.price)}")
@@ -84,7 +83,7 @@ def ussd_order(request):
             if quantity <= 0:
                 raise ValueError()
             context["quantity"] = quantity
-            toppings = Topping.objects.all()
+            toppings = Topping.objects.all() # type: ignore
             menu_lines = ["Select toppings (comma separated numbers):"]
             for idx, t in enumerate(toppings, start=1):
                 menu_lines.append(f"{idx}. {t.name}")
@@ -96,14 +95,14 @@ def ussd_order(request):
 
     if state == "select_toppings":
         try:
-            toppings = list(Topping.objects.all())
+            toppings = list(Topping.objects.all()) # type: ignore
             selected_indices = [int(i.strip()) - 1 for i in selection.split(",")]
             topping_ids = [toppings[idx].id for idx in selected_indices]
             context["topping_ids"] = topping_ids
 
-            pizza = Pizza.objects.get(id=context["pizza_id"])
+            pizza = Pizza.objects.get(id=context["pizza_id"]) # type: ignore
             quantity = context["quantity"]
-            selected_toppings = Topping.objects.filter(id__in=topping_ids)
+            selected_toppings = Topping.objects.filter(id__in=topping_ids) # type: ignore
 
             base_price = pizza.price
             topping_price = sum(t.price for t in selected_toppings)
@@ -132,12 +131,12 @@ def ussd_order(request):
 
     if state == "confirm_order":
         if selection == '1':
-            pizza = Pizza.objects.get(id=context["pizza_id"])
+            pizza = Pizza.objects.get(id=context["pizza_id"]) # type: ignore
             quantity = context["quantity"]
-            toppings = Topping.objects.filter(id__in=context["topping_ids"])
+            toppings = Topping.objects.filter(id__in=context["topping_ids"]) # type: ignore
 
-            order = Order.objects.create()
-            order_item = OrderItem.objects.create(order=order, pizza=pizza, quantity=quantity)
+            order = Order.objects.create() # type: ignore
+            order_item = OrderItem.objects.create(order=order, pizza=pizza, quantity=quantity) # type: ignore
             order_item.toppings.set(toppings)
 
             cache.delete(session_id)
