@@ -10,7 +10,7 @@ from .serializers import PizzaSerializer, ToppingSerializer
 
 @api_view(['GET'])
 def pizza_list(request):
-    pizzas = Pizza.objects.all() # type: ignore
+    pizzas = Pizza.objects.all()  # type: ignore
     serializer = PizzaSerializer(pizzas, many=True)
     return Response(serializer.data)
 
@@ -19,7 +19,7 @@ def pizza_list(request):
 def topping_list(request):
     size = request.GET.get('size')
     category = request.GET.get('category')
-    toppings = Topping.objects.all() # type: ignore
+    toppings = Topping.objects.all()  # type: ignore
     if size:
         toppings = toppings.filter(pizza__name__iexact=size)
     if category:
@@ -53,7 +53,7 @@ def ussd_order(request):
 
     if state == "main_menu_selection":
         if selection == '1':
-            pizzas = Pizza.objects.all() # type: ignore
+            pizzas = Pizza.objects.all()  # type: ignore
             menu_lines = ["Select pizza size:"]
             for idx, p in enumerate(pizzas, start=1):
                 menu_lines.append(f"{idx}. {p.name} - {int(p.price)}")
@@ -68,7 +68,7 @@ def ussd_order(request):
 
     if state == "select_size":
         try:
-            pizzas = list(Pizza.objects.all()) # type: ignore
+            pizzas = list(Pizza.objects.all())  # type: ignore
             pizza = pizzas[int(selection) - 1]
             context.update({"pizza_id": pizza.id, "pizza_name": pizza.name})
             session_data.update({"state": "select_quantity", "context": context})
@@ -83,7 +83,7 @@ def ussd_order(request):
             if quantity <= 0:
                 raise ValueError()
             context["quantity"] = quantity
-            toppings = Topping.objects.all() # type: ignore
+            toppings = Topping.objects.all()  # type: ignore
             menu_lines = ["Select toppings (comma separated numbers):"]
             for idx, t in enumerate(toppings, start=1):
                 menu_lines.append(f"{idx}. {t.name}")
@@ -95,14 +95,14 @@ def ussd_order(request):
 
     if state == "select_toppings":
         try:
-            toppings = list(Topping.objects.all()) # type: ignore
+            toppings = list(Topping.objects.all())  # type: ignore
             selected_indices = [int(i.strip()) - 1 for i in selection.split(",")]
             topping_ids = [toppings[idx].id for idx in selected_indices]
             context["topping_ids"] = topping_ids
 
-            pizza = Pizza.objects.get(id=context["pizza_id"]) # type: ignore
+            pizza = Pizza.objects.get(id=context["pizza_id"])  # type: ignore
             quantity = context["quantity"]
-            selected_toppings = Topping.objects.filter(id__in=topping_ids) # type: ignore
+            selected_toppings = Topping.objects.filter(id__in=topping_ids)  # type: ignore
 
             base_price = pizza.price
             topping_price = sum(t.price for t in selected_toppings)
@@ -131,12 +131,12 @@ def ussd_order(request):
 
     if state == "confirm_order":
         if selection == '1':
-            pizza = Pizza.objects.get(id=context["pizza_id"]) # type: ignore
+            pizza = Pizza.objects.get(id=context["pizza_id"])  # type: ignore
             quantity = context["quantity"]
-            toppings = Topping.objects.filter(id__in=context["topping_ids"]) # type: ignore
+            toppings = Topping.objects.filter(id__in=context["topping_ids"])  # type: ignore
 
-            order = Order.objects.create() # type: ignore
-            order_item = OrderItem.objects.create(order=order, pizza=pizza, quantity=quantity) # type: ignore
+            order = Order.objects.create()  # type: ignore
+            order_item = OrderItem.objects.create(order=order, pizza=pizza, quantity=quantity)  # type: ignore
             order_item.toppings.set(toppings)
 
             cache.delete(session_id)
@@ -148,3 +148,58 @@ def ussd_order(request):
             return Response({"error": "Invalid confirmation selection"}, status=400)
 
     return Response({"error": "Invalid state or selection"}, status=400)
+
+
+
+@api_view(['GET'])
+def make_order(request):
+    pizza_id = request.GET.get("pizza_id")
+    quantity = request.GET.get("quantity")
+    toppings_str = request.GET.get("toppings", "")
+
+    if not pizza_id or not quantity:
+        return Response({"error": "pizza_id and quantity are required"}, status=400)
+
+    try:
+        pizza = Pizza.objects.get(id=int(pizza_id))
+    except (Pizza.DoesNotExist, ValueError):
+        return Response({"error": "Invalid pizza_id"}, status=400)
+
+    try:
+        quantity = int(quantity)
+        if quantity <= 0:
+            raise ValueError()
+    except ValueError:
+        return Response({"error": "Invalid quantity"}, status=400)
+
+    topping_ids = []
+    if toppings_str:
+        try:
+            topping_ids = [int(i.strip()) for i in toppings_str.split(",") if i.strip()]
+        except ValueError:
+            return Response({"error": "Invalid toppings list"}, status=400)
+
+    toppings = Topping.objects.filter(id__in=topping_ids) if topping_ids else []
+
+    base_price = pizza.price
+    topping_price = sum(t.price for t in toppings)
+    subtotal = quantity * (base_price + topping_price)
+    vat = subtotal * Decimal("0.16")
+    total = subtotal + vat
+
+    order = Order.objects.create()
+    order_item = OrderItem.objects.create(order=order, pizza=pizza, quantity=quantity)
+    if toppings:
+        order_item.toppings.set(toppings)
+
+    receipt = {
+        "order_id": order.id,
+        "pizza": pizza.name,
+        "quantity": quantity,
+        "toppings": [t.name for t in toppings],
+        "subtotal": f"{subtotal:.2f}",
+        "vat": f"{vat:.2f}",
+        "total": f"{total:.2f}"
+    }
+
+    return Response({"message": "Order placed successfully", "receipt": receipt})
