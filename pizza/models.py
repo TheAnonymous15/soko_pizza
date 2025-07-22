@@ -24,24 +24,29 @@ class Topping(models.Model):
     def __str__(self):
         return self.name
 
+from django.db import models
+
+class Account(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    account_number = models.CharField(max_length=13, unique=True)
+    account_balance = models.DecimalField(max_digits=50, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"Account {self.account_number} — Balance: {self.account_balance:.2f}"
+
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-
-    @property
-    def subtotal(self):
-        return sum(item.total_price for item in self.items.all()) # type: ignore
-
-    @property
-    def vat(self):
-        return self.subtotal * VAT_RATE
-
-    @property
-    def total(self):
-        return self.subtotal + self.vat
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    vat = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    import uuid
+    order_number = models.CharField(default=uuid.uuid4,max_length=20, editable=False, unique=True)
+    payment_status = models.CharField(default="Pending", editable=False, max_length=20)
 
     def __str__(self):
-        return f"Order #{self.id} ({self.created_at.date()})"
+        return f"Order #{self.order_number} payment status {self.payment_status} ({self.created_at.now()})"
+
 
 
 class OrderItem(models.Model):

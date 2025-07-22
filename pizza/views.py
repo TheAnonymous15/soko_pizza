@@ -1,12 +1,60 @@
+import datetime
+from datetime import datetime
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.cache import cache
 from decimal import Decimal
+from .models import Order, OrderItem, Pizza, Topping, Account
+from .serializers import PizzaSerializer, ToppingSerializer, AccountSerializer
 
-from .models import Order, OrderItem, Pizza, Topping
-from .serializers import PizzaSerializer, ToppingSerializer
 
+@api_view(['POST'])
+def make_payment(request):
+    data = request.data
+    account_number = data.get("account_number")
+    amount = data.get("amount")
+    order_id = data.get("order_id")
+
+    if not account_number or not amount or not order_id:
+        return Response({"error": "Account number, order id and amount are required"}, status=400)
+
+    try:
+        amount = Decimal(amount)
+        if amount <= 0:
+            raise ValueError()
+    except:
+        return Response({"error": "Invalid amount"}, status=400)
+
+    try:
+        order = Order.objects.get(order_number=order_id)
+    except Order.DoesNotExist:
+        return Response({"error": "Order not found"}, status=404)
+
+    try:
+        account = Account.objects.get(account_number=account_number)
+    except Account.DoesNotExist:
+        return Response({"error": "Account not found"}, status=404)
+
+    if account.account_balance < amount:
+        return Response({"error": "Insufficient account balance"}, status=400)
+
+    # Deduct and mark payment
+    account.account_balance -= amount
+    account.save()
+
+    order.payment_status = "completed"  # make sure your Order model has this field
+    order.save()
+
+    return Response({
+        "message": "Payment successful",
+        "account": AccountSerializer(account).data
+    })
+
+
+         
+
+         
 
 @api_view(['GET'])
 def pizza_list(request):
@@ -148,6 +196,67 @@ def ussd_order(request):
             return Response({"error": "Invalid confirmation selection"}, status=400)
 
     return Response({"error": "Invalid state or selection"}, status=400)
+
+
+@api_view(['POST'])
+def post_order(request):
+    data = request.data
+    pizza_id = data.get("pizza_id")
+    quantity = data.get("quantity")
+    toppings_list = data.get("toppings", [])
+
+    if not pizza_id or not quantity:
+        return Response({"error":"Pizza id and quantity are required"}, status = 400)
+
+    try:
+        pizza = Pizza.objects.get(id=int(pizza_id))
+    except (Pizza.DoesNotExist, ValueError):
+        return Response({"error": "Invalid pizza id"}, status = 400)
+    try:
+        quantity = int(quantity)
+        if quantity<=0:
+            raise ValueError()
+    except ValueError:
+        return Response({"error": "Invalid quantity"}, status=400)
+
+    topping_ids = []
+    if toppings_list:
+        if not isinstance(toppings_list,list):
+            return Response({"error":"Toppings must be a list of IDS"}, status = 400)
+        try:
+            topping_ids = [int(tid) for tid in toppings_list]
+        except ValueError:
+            return Response({"error": "Invalid topping list"}, status = 400)
+
+    toppings = Topping.objects.filter(id__in=topping_ids)
+
+    base_price = pizza.price
+    topping_price = sum(topping_price.price for topping_price in toppings)
+    subtotal = int(quantity) * (base_price + topping_price)
+    vat = subtotal * Decimal("0.16")
+    total_cost = vat + subtotal
+
+    now_str = datetime.now().strftime("%Y%m%d%H%M%S")
+    order_number = f"OR{now_str}"
+
+    order = Order.objects.create(subtotal = subtotal, vat = vat, total = total_cost, order_number = order_number)
+    order_item = OrderItem.objects.create(order = order, pizza = pizza, quantity = quantity)
+
+    if toppings:
+        order_item.toppings.set(toppings)
+
+    receipt = {
+        "order_id": order_number
+       , "pizza": pizza.name
+       , "Quantity": quantity
+        , "toppings": [t.name for t in toppings]
+        ,"subtotal":f"{subtotal:.2f}"
+        , "vat": f"{vat:.2f}"
+        ,"total": f"{total_cost:.2f}"
+
+    }
+
+    return Response({"message": "Order placed successfully", "receipt": receipt})
 
 
 
