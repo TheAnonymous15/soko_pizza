@@ -177,7 +177,12 @@ class MakePayment(APIView):
         try:
             account = Account.objects.get(account_number=account_number)  # type: ignore
         except Account.DoesNotExist:  # type: ignore
-
+            return Response({
+                "statusCode": "99",
+                "statusMessage": "Account not found",
+                "successful": False,
+                "responseObject": None
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         if order.payment_status == "00":
             return Response({
