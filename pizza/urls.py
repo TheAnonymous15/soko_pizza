@@ -1,12 +1,11 @@
 from django.urls import path
 
-from .views import pizza_list, topping_list, ussd_order, make_order, post_order, make_payment
+from .views import PizzaList, ToppingList, OrderView, MakePayment
 
 urlpatterns = [
-    path('pizzas', pizza_list, name = 'pizza-list')
-    ,path('toppings', topping_list, name = 'topping-list')
-    ,path('order', post_order, name = 'post-order')
-    ,path('new_order', make_order, name = 'make-order')
-    ,path('payment', make_payment, name = 'make-payment')
+    path('v1/pizzas/', PizzaList.as_view(), name = 'pizza-list')
+    ,path('v1/toppings/', ToppingList.as_view(), name = 'topping-list')
+    ,path('v1/order/', OrderView.as_view(), name = 'post-order')
+    ,path('v1/payment/', MakePayment.as_view(), name = 'make-payment')
 
 ]

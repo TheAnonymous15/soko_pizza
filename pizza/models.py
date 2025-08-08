@@ -10,6 +10,9 @@ class Pizza(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        app_label = 'pizza'
+
 
 class Topping(models.Model):
     CATEGORY_CHOICES = (
@@ -24,7 +27,9 @@ class Topping(models.Model):
     def __str__(self):
         return self.name
 
-from django.db import models
+    class Meta:
+        app_label = 'pizza'
+
 
 class Account(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -34,6 +39,9 @@ class Account(models.Model):
     def __str__(self):
         return f"Account {self.account_number} — Balance: {self.account_balance:.2f}"
 
+    class Meta:
+        app_label = 'pizza'
+
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -41,12 +49,15 @@ class Order(models.Model):
     vat = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     import uuid
-    order_number = models.CharField(default=uuid.uuid4,max_length=20, editable=False, unique=True)
-    payment_status = models.CharField(default="Pending", editable=False, max_length=20)
+    order_number = models.CharField(default=uuid.uuid4, max_length=20, editable=False, unique=True)
+    payment_status = models.CharField(default="99", editable=False, max_length=2)
+
 
     def __str__(self):
-        return f"Order #{self.order_number} payment status {self.payment_status} ({self.created_at.now()})"
+        return f"Order: {self.order_number} \nPayment status: {self.payment_status} ({self.created_at.now()})"
 
+    class Meta:
+        app_label = 'pizza'
 
 
 class OrderItem(models.Model):
@@ -63,3 +74,6 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.pizza.name} in Order #{self.order.id}"
+
+    class Meta:
+        app_label = 'pizza'
